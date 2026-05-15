@@ -47,9 +47,12 @@ export function useCreateVisit() {
   const { t } = useTranslation()
   return useMutation({
     mutationFn: (data: VisitInsert) => visitsService.createVisit(data),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['visits'] })
       queryClient.invalidateQueries({ queryKey: ['customers'] })
+      queryClient.invalidateQueries({ queryKey: ['assigned-customers'] })
+      queryClient.invalidateQueries({ queryKey: ['customer', variables.customer_id] })
+      queryClient.invalidateQueries({ queryKey: ['follow-ups'] })
       queryClient.invalidateQueries({ queryKey: ['today-visits'] })
       queryClient.invalidateQueries({ queryKey: ['visits-30days'] })
       queryClient.invalidateQueries({ queryKey: ['top-employees'] })

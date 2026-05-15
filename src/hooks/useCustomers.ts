@@ -52,6 +52,7 @@ export function useCreateCustomer() {
     mutationFn: (data: CustomerInsert) => customersService.createCustomer(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] })
+      queryClient.invalidateQueries({ queryKey: ['assigned-customers'] })
       queryClient.invalidateQueries({ queryKey: ['customers-map'] })
       toast.success(t('success.created'))
     },
@@ -67,8 +68,10 @@ export function useUpdateCustomer() {
       customersService.updateCustomer(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['customers'] })
+      queryClient.invalidateQueries({ queryKey: ['assigned-customers'] })
       queryClient.invalidateQueries({ queryKey: ['customer', id] })
       queryClient.invalidateQueries({ queryKey: ['customers-map'] })
+      queryClient.invalidateQueries({ queryKey: ['follow-ups'] })
       toast.success(t('success.updated'))
     },
     onError: (err: Error) => toast.error(err.message),
@@ -82,6 +85,7 @@ export function useDeleteCustomer() {
     mutationFn: (id: string) => customersService.deleteCustomer(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] })
+      queryClient.invalidateQueries({ queryKey: ['assigned-customers'] })
       queryClient.invalidateQueries({ queryKey: ['customers-map'] })
       toast.success(t('success.deleted'))
     },
