@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <!-- Viewport: prevent user zoom for native-like PWA experience -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+    <!-- Theme color for browser chrome -->
+    <meta name="theme-color" content="#863bff" />
+    <meta name="msapplication-TileColor" content="#863bff" />
+
+    <!-- PWA: standalone mode on iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Baraka" />
+
+    <!-- PWA: standalone mode on Android (legacy) -->
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- App description -->
+    <meta name="description" content="Baraka Sales Management Application" />
+    <meta name="application-name" content="Baraka" />
+
+    <!-- Favicons & icons -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- iOS splash screens (iPhone sizes) -->
+    <link rel="apple-touch-startup-image" href="/apple-touch-icon-180x180.png" />
+
+    <title>Baraka Sales</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

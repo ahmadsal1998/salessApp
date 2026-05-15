@@ -1,0 +1,79 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+@theme {
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(222.2 84% 4.9%);
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(222.2 84% 4.9%);
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(222.2 84% 4.9%);
+  --color-primary: hsl(221.2 83.2% 53.3%);
+  --color-primary-foreground: hsl(210 40% 98%);
+  --color-secondary: hsl(210 40% 96.1%);
+  --color-secondary-foreground: hsl(222.2 47.4% 11.2%);
+  --color-muted: hsl(210 40% 96.1%);
+  --color-muted-foreground: hsl(215.4 16.3% 46.9%);
+  --color-accent: hsl(210 40% 96.1%);
+  --color-accent-foreground: hsl(222.2 47.4% 11.2%);
+  --color-destructive: hsl(0 84.2% 60.2%);
+  --color-destructive-foreground: hsl(210 40% 98%);
+  --color-border: hsl(214.3 31.8% 91.4%);
+  --color-input: hsl(214.3 31.8% 91.4%);
+  --color-ring: hsl(221.2 83.2% 53.3%);
+  --radius: 0.5rem;
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.07);
+  --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    /* Prevent double-tap zoom on interactive elements while keeping scrolling */
+    touch-action: manipulation;
+  }
+  html {
+    /* Prevent overscroll bounce (iOS rubber-band effect) in PWA standalone mode */
+    overscroll-behavior: none;
+    /* Respect safe areas on notched phones */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    /* Prevent text size adjustment when rotating on iOS */
+    -webkit-text-size-adjust: 100%;
+    /* Prevent callout menu on long press */
+    -webkit-touch-callout: none;
+    overscroll-behavior: none;
+  }
+  [dir="rtl"] body {
+    font-family: 'Cairo', 'Tajawal', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+  /* Scrollable containers should scroll smoothly on iOS */
+  [data-scroll], .overflow-auto, .overflow-y-auto, .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(214.3 31.8% 85%) transparent;
+  }
+  .dark .scrollbar-thin {
+    scrollbar-color: hsl(215 28% 25%) transparent;
+  }
+}
+
+/* Leaflet map z-index fixes */
+.leaflet-container {
+  z-index: 1;
+}
+.leaflet-pane {
+  z-index: 1 !important;
+}
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 2 !important;
+}
