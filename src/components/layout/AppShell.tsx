@@ -34,7 +34,7 @@ export default function AppShell() {
   }, [profile, navigate])
 
   return (
-    <div className={cn('flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden')}>
+    <div className={cn('flex h-screen overflow-hidden bg-muted')}>
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0 transition-all duration-300">
         <Header />

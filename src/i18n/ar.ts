@@ -106,6 +106,7 @@ export default {
     searchPlaceholder: 'بحث بالاسم أو المنشأة أو الهاتف...',
     filterByStatus: 'تصفية حسب الحالة',
     filterByEmployee: 'تصفية حسب الموظف',
+    filterByCategory: 'تصفية حسب النشاط التجاري',
     totalCustomers: 'إجمالي العملاء',
     categories: {
       retail: 'تجزئة',
@@ -117,6 +118,9 @@ export default {
       manufacturing: 'تصنيع',
       other: 'أخرى',
     },
+    addActivity: 'إضافة نشاط تجاري جديد',
+    newActivityName: 'اسم النشاط التجاري',
+    newActivityPlaceholder: 'مثال: مخبز',
     statuses: {
       new: 'جديد',
       visited: 'تمت الزيارة',
@@ -273,6 +277,7 @@ export default {
     reasonEn: 'السبب (إنجليزي)',
     reasonAr: 'السبب (عربي)',
     activeStatus: 'نشط',
+    confirmDeactivateReason: 'تعطيل سبب الرفض هذا؟',
     profile: 'ملفي الشخصي',
     updateProfile: 'تحديث الملف',
     changePassword: 'تغيير كلمة المرور',

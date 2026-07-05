@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/utils/cn'
+import { Button } from '@/components/ui/Button'
 
 interface Props {
   page: number
@@ -16,27 +17,23 @@ export default function Pagination({ page, totalPages, onPageChange, pageSize, t
   const end = Math.min(page * pageSize, total)
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700">
-      <p className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
+    <div className="flex items-center justify-between border-t border-border px-4 py-3">
+      <p className="text-xs tabular-nums text-muted-foreground">
         <span className="hidden sm:inline">{start}–{end} {t('common.of')} </span>
         {total} {t('common.rows')}
       </p>
       <div className="flex items-center gap-1">
-        <button
+        <Button
+          variant="ghost"
+          size="icon-sm"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
-          className={cn(
-            'p-1.5 rounded-lg transition-colors',
-            page <= 1
-              ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-          )}
         >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
+          <ChevronLeft className="size-4 rtl:rotate-180" />
+        </Button>
 
         {/* Numbered buttons — desktop only */}
-        <div className="hidden sm:flex items-center gap-1">
+        <div className="hidden items-center gap-1 sm:flex">
           {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
             let p = i + 1
             if (totalPages > 5 && page > 3) p = page - 2 + i
@@ -46,10 +43,10 @@ export default function Pagination({ page, totalPages, onPageChange, pageSize, t
                 key={p}
                 onClick={() => onPageChange(p)}
                 className={cn(
-                  'min-w-8 h-8 px-2 rounded-lg text-sm font-medium transition-colors',
+                  'h-8 min-w-8 rounded-lg px-2 text-sm font-medium transition-colors',
                   p === page
-                    ? 'bg-primary text-white'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                 )}
               >
                 {p}
@@ -59,22 +56,18 @@ export default function Pagination({ page, totalPages, onPageChange, pageSize, t
         </div>
 
         {/* Mobile page indicator */}
-        <span className="sm:hidden text-xs text-gray-600 dark:text-gray-400 px-2 tabular-nums">
+        <span className="px-2 text-xs tabular-nums text-muted-foreground sm:hidden">
           {page} / {totalPages}
         </span>
 
-        <button
+        <Button
+          variant="ghost"
+          size="icon-sm"
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
-          className={cn(
-            'p-1.5 rounded-lg transition-colors',
-            page >= totalPages
-              ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-          )}
         >
-          <ChevronRight className="w-4 h-4" />
-        </button>
+          <ChevronRight className="size-4 rtl:rotate-180" />
+        </Button>
       </div>
     </div>
   )

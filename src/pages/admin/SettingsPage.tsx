@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus, Edit2, ToggleLeft, ToggleRight, UserCircle, AlertOctagon } from 'lucide-react'
+import { Plus, Edit2, UserCircle, AlertOctagon } from 'lucide-react'
 import { useRejectionReasons, useCreateRejectionReason, useUpdateRejectionReason } from '@/hooks/useRejectionReasons'
 import { useAuthStore } from '@/store/auth.store'
 import { authService } from '@/services/auth.service'
@@ -8,9 +8,22 @@ import { toast } from 'sonner'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X } from 'lucide-react'
 import type { RejectionReason } from '@/types/app.types'
-import { cn } from '@/utils/cn'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { FormField } from '@/components/ui/FormField'
+import { Switch } from '@/components/ui/Switch'
+import EmptyState from '@/components/common/EmptyState'
+import ConfirmDialog from '@/components/common/ConfirmDialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogBody,
+  DialogFooter,
+} from '@/components/ui/Dialog'
 
 const reasonSchema = z.object({ reason_en: z.string().min(1), reason_ar: z.string().min(1) })
 type ReasonForm = z.infer<typeof reasonSchema>
@@ -23,6 +36,7 @@ export default function SettingsPage() {
   const { profile, setProfile } = useAuthStore()
   const [reasonDialogOpen, setReasonDialogOpen] = useState(false)
   const [editingReason, setEditingReason] = useState<RejectionReason | null>(null)
+  const [deactivateTarget, setDeactivateTarget] = useState<RejectionReason | null>(null)
   const [savingProfile, setSavingProfile] = useState(false)
 
   const { data: reasons } = useRejectionReasons(false)
@@ -52,6 +66,27 @@ export default function SettingsPage() {
     setReasonDialogOpen(true)
   }
 
+  function openAdd() {
+    setEditingReason(null)
+    resetReason({ reason_en: '', reason_ar: '' })
+    setReasonDialogOpen(true)
+  }
+
+  function requestToggle(r: RejectionReason) {
+    // Only confirm when deactivating; re-activating is non-destructive.
+    if (r.is_active) {
+      setDeactivateTarget(r)
+    } else {
+      updateReason.mutate({ id: r.id, updates: { is_active: true } })
+    }
+  }
+
+  async function confirmDeactivate() {
+    if (!deactivateTarget) return
+    await updateReason.mutateAsync({ id: deactivateTarget.id, updates: { is_active: false } })
+    setDeactivateTarget(null)
+  }
+
   async function onProfileSubmit(data: ProfileForm) {
     if (!profile) return
     setSavingProfile(true)
@@ -68,112 +103,114 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('settings.title')}</h1>
+      <h1 className="text-xl font-bold text-foreground">{t('settings.title')}</h1>
 
       {/* Profile */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <h2 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <UserCircle className="w-5 h-5 text-gray-400" />
-          {t('settings.profile')}
-        </h2>
-        <form onSubmit={handleProfile(onProfileSubmit)} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label={t('employees.fullName')} error={profileErrors.full_name?.message}>
-              <input {...regProfile('full_name')} className={inp} />
-            </Field>
-            <Field label={t('employees.phone')} error={profileErrors.phone?.message}>
-              <input {...regProfile('phone')} type="tel" className={inp} />
-            </Field>
-          </div>
-          <div>
-            <button type="submit" disabled={savingProfile} className="px-4 py-2 rounded-lg bg-primary hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-60 flex items-center gap-2 transition-colors">
-              {savingProfile && <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent" />}
-              {t('settings.updateProfile')}
-            </button>
-          </div>
-        </form>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <UserCircle className="w-5 h-5 text-muted-foreground" />
+            {t('settings.profile')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleProfile(onProfileSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField label={t('employees.fullName')} error={profileErrors.full_name?.message}>
+                <Input {...regProfile('full_name')} aria-invalid={!!profileErrors.full_name} />
+              </FormField>
+              <FormField label={t('employees.phone')} error={profileErrors.phone?.message}>
+                <Input {...regProfile('phone')} type="tel" />
+              </FormField>
+            </div>
+            <div>
+              <Button type="submit" loading={savingProfile}>
+                {t('settings.updateProfile')}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
       {/* Rejection Reasons */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <AlertOctagon className="w-5 h-5 text-gray-400" />
+      <Card>
+        <CardHeader className="flex-row items-center justify-between gap-3">
+          <CardTitle className="flex items-center gap-2">
+            <AlertOctagon className="w-5 h-5 text-muted-foreground" />
             {t('settings.rejectionReasons')}
-          </h2>
-          <button
-            onClick={() => { setEditingReason(null); resetReason({ reason_en: '', reason_ar: '' }); setReasonDialogOpen(true) }}
-            className="flex items-center gap-2 px-3 py-1.5 bg-primary hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
-          >
+          </CardTitle>
+          <Button size="sm" onClick={openAdd}>
             <Plus className="w-4 h-4" />
             {t('settings.addReason')}
-          </button>
-        </div>
-        <div className="space-y-2">
-          {reasons?.map(r => (
-            <div key={r.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{r.reason_en}</p>
-                <p className="text-xs text-gray-500 mt-0.5 truncate" dir="rtl">{r.reason_ar}</p>
-              </div>
-              <div className="flex items-center gap-1 shrink-0 ms-3">
-                <button
-                  onClick={() => openEdit(r)}
-                  className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => updateReason.mutateAsync({ id: r.id, updates: { is_active: !r.is_active } })}
-                  className={cn('p-1.5 rounded-lg transition-colors', r.is_active ? 'text-green-500 hover:bg-green-50 dark:hover:bg-green-950/20' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700')}
-                >
-                  {r.is_active ? <ToggleRight className="w-6 h-6" /> : <ToggleLeft className="w-6 h-6" />}
-                </button>
-              </div>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {reasons && reasons.length === 0 ? (
+            <EmptyState icon={AlertOctagon} title={t('common.noData')} size="compact" />
+          ) : (
+            <div className="space-y-2">
+              {reasons?.map(r => (
+                <div key={r.id} className="flex items-center justify-between p-3 rounded-xl border border-border hover:bg-secondary/50 transition-colors">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{r.reason_en}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate" dir="rtl">{r.reason_ar}</p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0 ms-3">
+                    <button
+                      onClick={() => openEdit(r)}
+                      className="p-1.5 rounded-lg hover:bg-secondary text-muted-foreground transition-colors"
+                      aria-label={t('common.edit')}
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <Switch
+                      checked={r.is_active}
+                      onCheckedChange={() => requestToggle(r)}
+                      aria-label={r.is_active ? t('common.active') : t('common.inactive')}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Reason dialog */}
-      {reasonDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setReasonDialogOpen(false)} />
-          <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md z-10 p-6">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{editingReason ? t('settings.editReason') : t('settings.addReason')}</h2>
-              <button onClick={() => setReasonDialogOpen(false)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500"><X className="w-5 h-5" /></button>
-            </div>
-            <form onSubmit={handleReason(onReasonSubmit)} className="space-y-4">
-              <Field label={t('settings.reasonEn')} error={reasonErrors.reason_en?.message} required>
-                <input {...regReason('reason_en')} className={inp} />
-              </Field>
-              <Field label={t('settings.reasonAr')} error={reasonErrors.reason_ar?.message} required>
-                <input {...regReason('reason_ar')} dir="rtl" className={inp} />
-              </Field>
-              <div className="flex justify-end gap-3">
-                <button type="button" onClick={() => setReasonDialogOpen(false)} className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 transition-colors">{t('common.cancel')}</button>
-                <button type="submit" disabled={createReason.isPending || updateReason.isPending} className="px-4 py-2 rounded-lg bg-primary hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-60 flex items-center gap-2 transition-colors">
-                  {(createReason.isPending || updateReason.isPending) && <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent" />}
-                  {t('common.save')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <Dialog open={reasonDialogOpen} onOpenChange={(open) => { setReasonDialogOpen(open); if (!open) setEditingReason(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingReason ? t('settings.editReason') : t('settings.addReason')}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleReason(onReasonSubmit)}>
+            <DialogBody className="space-y-4">
+              <FormField label={t('settings.reasonEn')} error={reasonErrors.reason_en?.message} required>
+                <Input {...regReason('reason_en')} aria-invalid={!!reasonErrors.reason_en} />
+              </FormField>
+              <FormField label={t('settings.reasonAr')} error={reasonErrors.reason_ar?.message} required>
+                <Input {...regReason('reason_ar')} dir="rtl" aria-invalid={!!reasonErrors.reason_ar} />
+              </FormField>
+            </DialogBody>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setReasonDialogOpen(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button type="submit" loading={createReason.isPending || updateReason.isPending}>
+                {t('common.save')}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={!!deactivateTarget}
+        title={t('settings.confirmDeactivateReason')}
+        confirmLabel={t('common.confirm')}
+        onConfirm={confirmDeactivate}
+        onCancel={() => setDeactivateTarget(null)}
+        loading={updateReason.isPending}
+      />
     </div>
   )
 }
-
-function Field({ label, error, required, children }: { label: string; error?: string; required?: boolean; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{label}{required && <span className="text-red-500 ms-0.5">*</span>}</label>
-      {children}
-      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
-    </div>
-  )
-}
-
-const inp = 'w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors'

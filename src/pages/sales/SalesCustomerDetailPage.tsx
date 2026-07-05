@@ -1,15 +1,21 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { MapPin, Phone, User, Building2, Calendar, Navigation, ArrowLeft, Plus, Globe, Link as LinkIcon, CalendarX, Star, Clock, AlertCircle } from 'lucide-react'
+import { MapPin, Phone, User, Building2, Calendar, Navigation, ArrowLeft, Plus, CalendarX, Star, Clock, AlertCircle } from 'lucide-react'
 import { useCustomer } from '@/hooks/useCustomers'
 import { useVisits } from '@/hooks/useVisits'
 import { CustomerStatusBadge, VisitResultBadge } from '@/components/common/StatusBadge'
 import VisitFormDialog from '@/components/visits/VisitFormDialog'
+import { PlatformIcon } from '@/components/customers/PlatformIcon'
+import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { formatDate, formatDateTime } from '@/utils/format'
 import EmptyState from '@/components/common/EmptyState'
 import { DAYS } from '@/components/customers/WorkingHoursInput'
-import type { SocialLink, SocialPlatform, StoreImage, WorkingHours, DayKey } from '@/types/app.types'
+import { cn } from '@/utils/cn'
+import type { SocialLink, StoreImage, WorkingHours, DayKey } from '@/types/app.types'
 
 export default function SalesCustomerDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -29,63 +35,60 @@ export default function SalesCustomerDetailPage() {
 
   if (isPending) return (
     <div className="space-y-4 max-w-2xl">
-      <div className="h-9 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse w-32" />
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-4">
+      <Skeleton className="h-9 w-32" />
+      <Card className="p-6 space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-2 flex-1">
-            <div className="h-6 rounded-md bg-gray-200 dark:bg-gray-700 animate-pulse w-1/2" />
-            <div className="h-4 rounded-md bg-gray-100 dark:bg-gray-700/60 animate-pulse w-1/4" />
+            <Skeleton className="h-6 w-1/2" />
+            <Skeleton className="h-4 w-1/4" />
           </div>
-          <div className="h-6 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse w-20 shrink-0" />
+          <Skeleton className="h-6 w-20 rounded-full shrink-0" />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse shrink-0" />
+              <Skeleton className="size-8 rounded-lg shrink-0" />
               <div className="space-y-1.5 flex-1">
-                <div className="h-3 rounded bg-gray-100 dark:bg-gray-700/60 animate-pulse w-1/3" />
-                <div className="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-2/3" />
+                <Skeleton className="h-3 w-1/3" />
+                <Skeleton className="h-4 w-2/3" />
               </div>
             </div>
           ))}
         </div>
-      </div>
-      <div className="h-48 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
+      </Card>
+      <Skeleton className="h-48 rounded-xl" />
     </div>
   )
-  if (!customer) return <div className="text-center py-16 text-gray-500">{t('errors.notFound')}</div>
+  if (!customer) return <div className="text-center py-16 text-muted-foreground">{t('errors.notFound')}</div>
 
   return (
     <div className="space-y-4 max-w-2xl">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors">
-          <ArrowLeft className="w-4 h-4" />{t('common.back')}
-        </button>
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="text-muted-foreground">
+          <ArrowLeft className="size-4" />{t('common.back')}
+        </Button>
         <div className="flex items-center gap-2">
-          <button
+          <Button
             onClick={() => setVisitOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white"
           >
-            <Plus className="w-4 h-4 shrink-0" />
+            <Plus className="size-4 shrink-0" />
             <span className="hidden sm:inline">{t('visits.addVisit')}</span>
-          </button>
+          </Button>
           {customer.latitude && customer.longitude && (
-            <button
-              onClick={openNavigation}
-              className="flex items-center gap-1.5 px-3 py-2 bg-primary hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
-            >
-              <Navigation className="w-4 h-4 shrink-0" />
+            <Button onClick={openNavigation}>
+              <Navigation className="size-4 shrink-0" />
               <span className="hidden sm:inline">{t('customers.navigateToLocation')}</span>
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <Card className="p-6">
         <div className="flex items-start justify-between gap-4 mb-5">
           <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">{customer.business_name}</h2>
-            <p className="text-gray-500 text-sm">{customer.category}</p>
+            <h2 className="text-xl font-bold text-foreground">{customer.business_name}</h2>
+            <p className="text-muted-foreground text-sm">{customer.category}</p>
           </div>
           <CustomerStatusBadge status={customer.status} />
         </div>
@@ -98,54 +101,54 @@ export default function SalesCustomerDetailPage() {
             { icon: Calendar, label: t('customers.createdAt'), value: formatDate(customer.created_at) },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0 mt-0.5">
-                <Icon className="w-4 h-4 text-gray-500" />
+              <div className="size-8 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
+                <Icon className="size-4 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-xs text-gray-400">{label}</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{value}</p>
+                <p className="text-xs text-muted-foreground">{label}</p>
+                <p className="text-sm font-medium text-foreground">{value}</p>
               </div>
             </div>
           ))}
         </div>
         {customer.notes && (
-          <div className="mt-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-            <p className="text-xs font-medium text-gray-500 mb-1">{t('common.notes')}</p>
-            <p className="text-sm text-gray-700 dark:text-gray-300">{customer.notes}</p>
+          <div className="mt-4 p-3 rounded-lg bg-muted">
+            <p className="text-xs font-medium text-muted-foreground mb-1">{t('common.notes')}</p>
+            <p className="text-sm text-foreground">{customer.notes}</p>
           </div>
         )}
 
         <CoverImagesSection images={customer.cover_images as StoreImage[] | null} t={t} />
         <WorkingHoursSection hours={customer.working_hours as WorkingHours | null} t={t} />
         <SocialLinksSection links={customer.social_links as SocialLink[] | null} t={t} />
-      </div>
+      </Card>
 
       {/* Visit history */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="font-semibold text-gray-900 dark:text-white">{t('customers.visitHistory')}</h3>
-          <span className="text-xs text-gray-500">{visits.length}</span>
+      <Card className="overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h3 className="font-semibold text-foreground">{t('customers.visitHistory')}</h3>
+          <span className="text-xs text-muted-foreground">{visits.length}</span>
         </div>
         {visits.length === 0 ? (
           <EmptyState icon={CalendarX} title={t('customers.noVisits')} />
         ) : (
-          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+          <div className="divide-y divide-border">
             {visits.map(v => (
-              <div key={v.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+              <div key={v.id} className="p-4 hover:bg-secondary/50 transition-colors">
                 <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                   <VisitResultBadge result={v.result} />
-                  <span className="text-xs text-gray-400">{formatDateTime(v.visit_date)}</span>
+                  <span className="text-xs text-muted-foreground">{formatDateTime(v.visit_date)}</span>
                 </div>
                 {v.rejection_reason && (
-                  <div className="flex items-start gap-1.5 text-xs text-red-600 dark:text-red-400 mt-1">
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-1.5 text-xs text-destructive mt-1">
+                    <AlertCircle className="size-3.5 shrink-0 mt-0.5" />
                     <span>{(v.rejection_reason as { reason_en: string })?.reason_en}</span>
                   </div>
                 )}
-                {v.notes && <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{v.notes}</p>}
+                {v.notes && <p className="text-sm text-muted-foreground mt-1">{v.notes}</p>}
                 {v.next_follow_up && (
-                  <div className="flex items-center gap-1.5 text-xs text-orange-600 dark:text-orange-400 mt-1">
-                    <Clock className="w-3.5 h-3.5 shrink-0" />
+                  <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 mt-1">
+                    <Clock className="size-3.5 shrink-0" />
                     <span>{t('visits.nextFollowUp')}: {formatDate(v.next_follow_up)}</span>
                   </div>
                 )}
@@ -153,30 +156,10 @@ export default function SalesCustomerDetailPage() {
             ))}
           </div>
         )}
-      </div>
+      </Card>
 
       <VisitFormDialog open={visitOpen} onClose={() => setVisitOpen(false)} preselectedCustomerId={id} />
     </div>
-  )
-}
-
-const PLATFORM_STYLES: Record<SocialPlatform, { bg: string; text: string; abbr: string }> = {
-  facebook:  { bg: 'bg-blue-600',  text: 'text-white', abbr: 'Fb' },
-  instagram: { bg: 'bg-pink-500',  text: 'text-white', abbr: 'Ig' },
-  tiktok:    { bg: 'bg-gray-900',  text: 'text-white', abbr: 'Tt' },
-  linkedin:  { bg: 'bg-blue-700',  text: 'text-white', abbr: 'Li' },
-  website:   { bg: '', text: '', abbr: '' },
-  custom:    { bg: '', text: '', abbr: '' },
-}
-
-function PlatformIcon({ platform }: { platform: SocialPlatform }) {
-  if (platform === 'website') return <Globe className="w-4 h-4 text-gray-500" />
-  if (platform === 'custom') return <LinkIcon className="w-4 h-4 text-gray-400" />
-  const { bg, text, abbr } = PLATFORM_STYLES[platform]
-  return (
-    <span className={`inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold ${bg} ${text}`}>
-      {abbr}
-    </span>
   )
 }
 
@@ -196,42 +179,34 @@ function WorkingHoursSection({ hours, t }: { hours: WorkingHours | null; t: (k: 
   const isOpenNow = !!todaySchedule?.open && cur >= todaySchedule.from && cur < todaySchedule.to
 
   return (
-    <div className="mt-4 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-700/40 border-b border-gray-200 dark:border-gray-700">
-        <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
-          <Clock className="w-3.5 h-3.5" />
+    <div className="mt-4 rounded-xl border border-border overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 bg-muted border-b border-border">
+        <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          <Clock className="size-3.5" />
           {t('customers.workingHours')}
         </span>
-        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-          isOpenNow
-            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-            : 'bg-gray-100 text-gray-500 dark:bg-gray-600/60 dark:text-gray-400'
-        }`}>
+        <Badge variant={isOpenNow ? 'success' : 'default'}>
           {isOpenNow ? t('customers.openNow') : t('customers.closedNow')}
-        </span>
+        </Badge>
       </div>
-      <div className="divide-y divide-gray-100 dark:divide-gray-700/60">
+      <div className="divide-y divide-border">
         {DAYS.map(day => {
           const schedule = hours[day as DayKey]
           const isToday = day === todayKey
           return (
             <div
               key={day}
-              className={`flex items-center justify-between px-3 py-2 text-xs ${
-                isToday ? 'bg-blue-50 dark:bg-blue-900/10' : 'bg-white dark:bg-gray-800'
-              }`}
+              className={cn('flex items-center justify-between px-3 py-2 text-xs', isToday ? 'bg-primary/5' : 'bg-card')}
             >
-              <span className={`font-semibold w-8 shrink-0 ${
-                isToday ? 'text-primary dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'
-              }`}>
+              <span className={cn('font-semibold w-8 shrink-0', isToday ? 'text-primary' : 'text-muted-foreground')}>
                 {t(`customers.days.${day}`)}
               </span>
               {schedule?.open ? (
-                <span className={isToday ? 'text-primary dark:text-blue-300 font-medium' : 'text-gray-600 dark:text-gray-300'}>
+                <span className={isToday ? 'text-primary font-medium' : 'text-foreground'}>
                   {fmt12(schedule.from)} – {fmt12(schedule.to)}
                 </span>
               ) : (
-                <span className="text-gray-400 dark:text-gray-500 italic">{t('customers.closed')}</span>
+                <span className="text-muted-foreground italic">{t('customers.closed')}</span>
               )}
             </div>
           )
@@ -253,7 +228,7 @@ function CoverImagesSection({ images, t }: { images: StoreImage[] | null; t: (k:
 
   return (
     <div className="mt-4">
-      <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 mb-2">
+      <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-muted mb-2">
         <img
           src={orderedImages[displayIdx]?.url}
           alt=""
@@ -261,8 +236,8 @@ function CoverImagesSection({ images, t }: { images: StoreImage[] | null; t: (k:
           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
         />
         {orderedImages[displayIdx]?.is_main && (
-          <span className="absolute top-2 inset-s-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-400/90 text-yellow-900 text-xs font-semibold">
-            <Star className="w-3 h-3 fill-yellow-900" />
+          <span className="absolute top-2 inset-s-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-400/90 text-amber-950 text-xs font-semibold">
+            <Star className="size-3 fill-amber-950" />
             {t('customers.mainCover')}
           </span>
         )}
@@ -274,21 +249,20 @@ function CoverImagesSection({ images, t }: { images: StoreImage[] | null; t: (k:
               key={i}
               type="button"
               onClick={() => setActiveIdx(i)}
-              className={`relative w-16 h-16 rounded-lg overflow-hidden shrink-0 border-2 transition-colors ${
-                displayIdx === i
-                  ? 'border-primary'
-                  : 'border-transparent opacity-70 hover:opacity-100'
-              }`}
+              className={cn(
+                'relative w-16 h-16 rounded-lg overflow-hidden shrink-0 border-2 transition-colors',
+                displayIdx === i ? 'border-primary' : 'border-transparent opacity-70 hover:opacity-100'
+              )}
             >
               <img
                 src={img.url}
                 alt=""
-                className="w-full h-full object-cover bg-gray-100 dark:bg-gray-700"
+                className="w-full h-full object-cover bg-muted"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
               />
               {img.is_main && (
                 <span className="absolute bottom-0.5 inset-e-0.5">
-                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 drop-shadow" />
+                  <Star className="size-3 fill-amber-400 text-amber-400 drop-shadow" />
                 </span>
               )}
             </button>
@@ -302,8 +276,8 @@ function CoverImagesSection({ images, t }: { images: StoreImage[] | null; t: (k:
 function SocialLinksSection({ links, t }: { links: SocialLink[] | null; t: (k: string) => string }) {
   if (!links?.length) return null
   return (
-    <div className="mt-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-      <p className="text-xs font-medium text-gray-500 mb-2">{t('customers.socialLinks')}</p>
+    <div className="mt-4 p-3 rounded-lg bg-muted">
+      <p className="text-xs font-medium text-muted-foreground mb-2">{t('customers.socialLinks')}</p>
       <div className="flex flex-wrap gap-2">
         {links.map((link, i) => {
           const href = link.url.startsWith('http') ? link.url : `https://${link.url}`
@@ -314,7 +288,7 @@ function SocialLinksSection({ links, t }: { links: SocialLink[] | null; t: (k: s
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-card border border-border text-xs font-medium text-foreground hover:bg-secondary transition-colors"
             >
               <PlatformIcon platform={link.platform} />
               {label}

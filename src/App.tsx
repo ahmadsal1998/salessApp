@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { useUiStore } from '@/store/ui.store'
 import { authService } from '@/services/auth.service'
 import { applyDirection } from '@/i18n'
+import { TooltipProvider } from '@/components/ui/Tooltip'
 import '@/i18n'
 
 const queryClient = new QueryClient({
@@ -37,30 +38,52 @@ function AuthInitializer() {
   }, [language])
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session) {
-        try {
-          const profile = await authService.getProfile(session.user.id)
-          setSession(session)
-          setProfile(profile)
-        } catch {
+    supabase.auth.getSession()
+      .then(async ({ data: { session }, error }) => {
+        if (error) {
+          // Stale/invalid refresh token left over in localStorage — purge it
+          // so the SDK's background auto-refresh stops retrying against it.
+          await supabase.auth.signOut()
           setSession(null)
+          setProfile(null)
+          return
         }
-      }
-      setLoading(false)
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session) {
+        if (session) {
           try {
             const profile = await authService.getProfile(session.user.id)
             setSession(session)
             setProfile(profile)
           } catch {
             setSession(null)
-            setProfile(null)
           }
+        }
+      })
+      .catch(() => {
+        setSession(null)
+        setProfile(null)
+      })
+      .finally(() => setLoading(false))
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        // Supabase docs: never call other supabase.* methods synchronously
+        // inside this callback — during session restore on page load it runs
+        // while the internal auth lock is still held, so a nested call (e.g.
+        // getProfile()'s implicit getSession() for the auth header) deadlocks
+        // waiting on the same lock forever. Deferring with setTimeout lets the
+        // outer call release the lock first.
+        // https://supabase.com/docs/reference/javascript/auth-onauthstatechange
+        if (event === 'SIGNED_IN' && session) {
+          setTimeout(async () => {
+            try {
+              const profile = await authService.getProfile(session.user.id)
+              setSession(session)
+              setProfile(profile)
+            } catch {
+              setSession(null)
+              setProfile(null)
+            }
+          }, 0)
         } else if (event === 'SIGNED_OUT' || !session) {
           setSession(null)
           setProfile(null)
@@ -79,9 +102,11 @@ function AuthInitializer() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthInitializer />
-      <RouterProvider router={router} />
-      <Toaster position="top-right" richColors closeButton />
+      <TooltipProvider delayDuration={200}>
+        <AuthInitializer />
+        <RouterProvider router={router} />
+        <Toaster position="top-right" richColors closeButton />
+      </TooltipProvider>
     </QueryClientProvider>
   )
 }

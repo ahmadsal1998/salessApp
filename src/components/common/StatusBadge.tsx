@@ -13,7 +13,7 @@ export function CustomerStatusBadge({ status, className }: CustomerStatusBadgePr
   return (
     <span
       className={cn(
-        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border',
+        'inline-flex w-fit items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap',
         statusColors[status],
         className
       )}
@@ -33,7 +33,7 @@ export function VisitResultBadge({ result, className }: VisitResultBadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border',
+        'inline-flex w-fit items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap',
         visitResultColors[result],
         className
       )}

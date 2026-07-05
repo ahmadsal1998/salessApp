@@ -92,7 +92,7 @@ export default function LocationPicker({ value, onChange, height = '300px' }: Pr
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <span className="text-sm font-medium text-foreground">
           {t('customers.pickLocation')}
         </span>
         <div className="flex items-center gap-2">
@@ -100,9 +100,9 @@ export default function LocationPicker({ value, onChange, height = '300px' }: Pr
             <button
               type="button"
               onClick={() => onChange(null)}
-              className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700"
+              className="flex items-center gap-1 text-xs text-destructive hover:text-destructive/80"
             >
-              <X className="w-3 h-3" />
+              <X className="size-3" />
               {t('common.clear')}
             </button>
           )}
@@ -111,22 +111,22 @@ export default function LocationPicker({ value, onChange, height = '300px' }: Pr
             onClick={handleCurrentLocation}
             disabled={locating}
             className={cn(
-              'flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border transition-colors',
-              'border-primary text-primary hover:bg-primary hover:text-white disabled:opacity-60'
+              'flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition-colors',
+              'border-primary text-primary hover:bg-primary hover:text-primary-foreground disabled:opacity-60'
             )}
           >
-            <Navigation className="w-3 h-3" />
+            <Navigation className="size-3" />
             {locating ? t('map.locating') : t('map.currentLocation')}
           </button>
         </div>
       </div>
 
       {locationError && (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 px-3 py-2.5">
-          <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
-          <div className="flex-1 min-w-0">
+        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 dark:border-amber-500/20 dark:bg-amber-500/10">
+          <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-500" />
+          <div className="min-w-0 flex-1">
             <p className="text-xs text-amber-700 dark:text-amber-400">{locationError}</p>
-            <p className="text-xs text-amber-600/70 dark:text-amber-500/70 mt-0.5">
+            <p className="mt-0.5 text-xs text-amber-600/70 dark:text-amber-500/70">
               {t('map.clickToSetManually')}
             </p>
           </div>
@@ -134,15 +134,15 @@ export default function LocationPicker({ value, onChange, height = '300px' }: Pr
             type="button"
             onClick={handleCurrentLocation}
             disabled={locating}
-            className="flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 shrink-0 disabled:opacity-50 transition-colors"
+            className="flex shrink-0 items-center gap-1 text-xs font-medium text-amber-600 transition-colors hover:text-amber-800 disabled:opacity-50 dark:text-amber-400 dark:hover:text-amber-300"
           >
-            <RefreshCw className="w-3 h-3" />
+            <RefreshCw className="size-3" />
             {t('map.retry')}
           </button>
         </div>
       )}
 
-      <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700" style={{ height }}>
+      <div className="overflow-hidden rounded-xl border border-border" style={{ height }}>
         <MapContainer
           center={defaultCenter}
           zoom={value ? 14 : 12}
@@ -159,12 +159,12 @@ export default function LocationPicker({ value, onChange, height = '300px' }: Pr
       </div>
 
       {value ? (
-        <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-          <MapPin className="w-3 h-3" />
+        <p className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+          <MapPin className="size-3" />
           {t('customers.locationSet')}: {value.lat}, {value.lng}
         </p>
       ) : (
-        <p className="text-xs text-gray-400">{t('map.clickMarker')}</p>
+        <p className="text-xs text-muted-foreground">{t('map.clickMarker')}</p>
       )}
     </div>
   )

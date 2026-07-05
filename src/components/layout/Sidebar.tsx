@@ -7,6 +7,8 @@ import {
 import { useAuthStore } from '@/store/auth.store'
 import { useUiStore } from '@/store/ui.store'
 import { cn } from '@/utils/cn'
+import { Avatar, AvatarFallback } from '@/components/ui/Avatar'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/Tooltip'
 
 const adminNav = [
   { key: 'nav.dashboard', icon: LayoutDashboard, to: '/dashboard' },
@@ -28,17 +30,18 @@ const salesNav = [
 export default function Sidebar() {
   const { t } = useTranslation()
   const { profile } = useAuthStore()
-  const { sidebarOpen, setSidebarOpen } = useUiStore()
+  const { sidebarOpen, setSidebarOpen, language } = useUiStore()
 
   const isSales = profile?.role === 'sales'
   const navItems = isSales ? salesNav : adminNav
+  const tooltipSide = language === 'ar' ? 'left' : 'right'
 
   return (
     <>
       {/* Mobile overlay — sales role uses BottomNav instead of sidebar on mobile */}
       {sidebarOpen && !isSales && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[2px] animate-fade-in lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -47,7 +50,7 @@ export default function Sidebar() {
       <aside
         className={cn(
           isSales ? 'hidden lg:flex lg:flex-col' : 'flex flex-col',
-          'fixed inset-y-0 inset-s-0 z-50 bg-white dark:bg-gray-900 border-e border-gray-200 dark:border-gray-800 transition-all duration-300 ease-in-out',
+          'fixed inset-y-0 inset-s-0 z-50 border-e border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out',
           'lg:relative lg:translate-x-0 lg:rtl:translate-x-0',
           sidebarOpen
             ? 'w-64 translate-x-0'
@@ -55,82 +58,95 @@ export default function Sidebar() {
         )}
       >
         {/* Logo */}
-        <div className="flex items-center gap-3 px-4 h-16 border-b border-gray-200 dark:border-gray-800 shrink-0 overflow-hidden">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary text-white shrink-0">
-            <BarChart3 className="w-5 h-5" />
+        <div className="flex h-16 shrink-0 items-center gap-3 overflow-hidden border-b border-sidebar-border px-4">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <BarChart3 className="size-5" />
           </div>
           <div className={cn('min-w-0 flex-1 transition-all duration-300', !sidebarOpen && 'lg:hidden')}>
-            <p className="font-bold text-gray-900 dark:text-white text-sm truncate">
+            <p className="truncate text-sm font-bold text-foreground">
               {t('auth.appName')}
             </p>
-            <p className="text-xs text-gray-400 truncate">{t('auth.appTagline')}</p>
+            <p className="truncate text-xs text-muted-foreground">{t('auth.appTagline')}</p>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="ms-auto text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 lg:hidden transition-colors"
+            className="ms-auto rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground lg:hidden"
           >
-            <X className="w-5 h-5" />
+            <X className="size-5" />
           </button>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto scrollbar-thin">
-          {navItems.map(({ key, icon: Icon, to }) => (
-            <NavLink
-              key={to}
-              to={to}
-              title={!sidebarOpen ? t(key) : undefined}
-              onClick={() => { if (window.innerWidth < 1024) setSidebarOpen(false) }}
-              className={({ isActive }) =>
-                cn(
-                  'relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
-                  isActive
-                    ? 'bg-primary/10 text-primary dark:text-blue-400 dark:bg-primary/15 shadow-sm ring-1 ring-primary/20 before:absolute before:inset-y-1 before:inset-s-0 before:w-0.5 before:rounded-full before:bg-primary'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
-                )
-              }
-            >
-              <Icon className="w-5 h-5 shrink-0" />
-              <span className={cn('truncate transition-all duration-300', !sidebarOpen && 'lg:hidden')}>
-                {t(key)}
-              </span>
-            </NavLink>
-          ))}
+        <nav className="flex-1 space-y-0.5 overflow-y-auto scrollbar-thin px-2 py-4">
+          {navItems.map(({ key, icon: Icon, to }) => {
+            const link = (
+              <NavLink
+                key={to}
+                to={to}
+                onClick={() => { if (window.innerWidth < 1024) setSidebarOpen(false) }}
+                className={({ isActive }) =>
+                  cn(
+                    'relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150',
+                    !sidebarOpen && 'lg:justify-center',
+                    isActive
+                      ? 'bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20 before:absolute before:inset-y-1 before:inset-s-0 before:w-0.5 before:rounded-full before:bg-primary'
+                      : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                  )
+                }
+              >
+                <Icon className="size-5 shrink-0" />
+                <span className={cn('truncate transition-all duration-300', !sidebarOpen && 'lg:hidden')}>
+                  {t(key)}
+                </span>
+              </NavLink>
+            )
+            if (sidebarOpen) return link
+            return (
+              <Tooltip key={to} delayDuration={300}>
+                <TooltipTrigger asChild>{link}</TooltipTrigger>
+                <TooltipContent side={tooltipSide} className="hidden lg:block">
+                  {t(key)}
+                </TooltipContent>
+              </Tooltip>
+            )
+          })}
         </nav>
 
         {/* Desktop collapse toggle */}
-        <div className="hidden lg:flex px-2 py-2 border-t border-gray-200 dark:border-gray-800 shrink-0">
+        <div className="hidden shrink-0 border-t border-sidebar-border px-2 py-2 lg:flex">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             title={sidebarOpen ? t('common.collapse') : t('common.expand')}
-            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           >
             <ChevronRight
               className={cn(
-                'w-5 h-5 shrink-0 transition-transform duration-300',
+                'size-5 shrink-0 transition-transform duration-300',
                 sidebarOpen ? 'ltr:rotate-180 rtl:rotate-0' : 'ltr:rotate-0 rtl:rotate-180'
               )}
             />
-            {sidebarOpen && <span className="text-xs truncate">{t('common.collapse')}</span>}
+            {sidebarOpen && <span className="truncate text-xs">{t('common.collapse')}</span>}
           </button>
         </div>
 
         {/* User info */}
         {profile && (
           <div className={cn(
-            'p-3 border-t border-gray-200 dark:border-gray-800 shrink-0',
+            'shrink-0 border-t border-sidebar-border p-3',
             !sidebarOpen && 'lg:flex lg:justify-center'
           )}>
             <div className={cn(
               'flex items-center gap-3 px-2 py-2',
-              !sidebarOpen && 'lg:px-0 lg:justify-center'
+              !sidebarOpen && 'lg:justify-center lg:px-0'
             )}>
-              <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">
-                {profile.full_name?.[0]?.toUpperCase() ?? '?'}
-              </div>
+              <Avatar className="size-8 shrink-0">
+                <AvatarFallback className="text-sm">
+                  {profile.full_name?.[0]?.toUpperCase() ?? '?'}
+                </AvatarFallback>
+              </Avatar>
               <div className={cn('min-w-0', !sidebarOpen && 'lg:hidden')}>
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{profile.full_name}</p>
-                <p className="text-xs text-gray-500 truncate">{profile.email}</p>
+                <p className="truncate text-sm font-medium text-foreground">{profile.full_name}</p>
+                <p className="truncate text-xs text-muted-foreground">{profile.email}</p>
               </div>
             </div>
           </div>

@@ -2,6 +2,8 @@ import { useTranslation } from 'react-i18next'
 import { useCustomersForMap } from '@/hooks/useCustomers'
 import { useAuthStore } from '@/store/auth.store'
 import CustomerMap from '@/components/map/CustomerMap'
+import { Card } from '@/components/ui/Card'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { statusMapColors } from '@/utils/status'
 import type { CustomerStatus } from '@/types/app.types'
 
@@ -19,29 +21,35 @@ export default function MapNavPage() {
   const { profile } = useAuthStore()
   const { data: customers, isLoading } = useCustomersForMap(profile?.id)
 
+  const mappedCount = customers?.filter(c => c.latitude && c.longitude).length ?? 0
+
   return (
     <div className="space-y-4 flex flex-col h-full">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('nav.mapNavigation')}</h1>
-        <span className="text-sm text-gray-500">
-          {customers?.filter(c => c.latitude && c.longitude).length ?? 0} {t('customers.title').toLowerCase()}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h1 className="text-xl font-bold text-foreground">{t('nav.mapNavigation')}</h1>
+        <span className="text-sm text-muted-foreground">
+          {mappedCount} {t('customers.title').toLowerCase()}
         </span>
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        {LEGEND.map(({ status, labelKey }) => (
-          <div key={status} className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full border-2 border-white shadow-sm" style={{ background: statusMapColors[status] }} />
-            <span className="text-xs text-gray-600 dark:text-gray-400">{t(labelKey)}</span>
-          </div>
-        ))}
-      </div>
+      {/* Legend */}
+      <Card className="p-3">
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          {LEGEND.map(({ status, labelKey }) => (
+            <div key={status} className="flex items-center gap-1.5">
+              <span
+                className="size-3 rounded-full border-2 border-card shadow-sm shrink-0"
+                style={{ background: statusMapColors[status] }}
+              />
+              <span className="text-xs text-muted-foreground">{t(labelKey)}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
 
-      <div className="flex-1 min-h-96 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+      <div className="flex-1 min-h-96 rounded-xl overflow-hidden border border-border">
         {isLoading ? (
-          <div className="h-full bg-gray-100 dark:bg-gray-800 animate-pulse flex items-center justify-center">
-            <p className="text-gray-400">{t('common.loading')}</p>
-          </div>
+          <Skeleton className="h-full w-full rounded-none" />
         ) : (
           <CustomerMap customers={customers ?? []} adminView={false} height="100%" />
         )}

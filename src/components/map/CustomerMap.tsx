@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import type { Customer } from '@/types/app.types'
 import { statusMapColors } from '@/utils/status'
 import { Navigation } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 
 // Fix default icon
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl
@@ -77,33 +78,22 @@ export default function CustomerMap({ customers, adminView = true, height = '100
           >
             <Popup>
               <div className="min-w-48">
-                <p className="font-semibold text-gray-900">{c.business_name}</p>
-                <p className="text-sm text-gray-600">{c.owner_name}</p>
-                <p className="text-sm text-gray-500">{c.phone}</p>
-                <div className="flex gap-2 mt-2">
-                  <button
-                    onClick={() => openInMaps(c.latitude!, c.longitude!)}
-                    className="flex items-center gap-1 text-xs bg-primary text-white px-2 py-1 rounded-md hover:bg-blue-700"
-                  >
-                    <Navigation className="w-3 h-3" />
+                <p className="font-semibold text-foreground">{c.business_name}</p>
+                <p className="text-sm text-muted-foreground">{c.owner_name}</p>
+                <p className="text-sm text-muted-foreground">{c.phone}</p>
+                <div className="mt-2 flex gap-2">
+                  <Button size="sm" className="h-7 px-2 text-xs" onClick={() => openInMaps(c.latitude!, c.longitude!)}>
+                    <Navigation className="size-3" />
                     {t('customers.navigateToLocation')}
-                  </button>
-                  {adminView && (
-                    <button
-                      onClick={() => navigate(`/customers/${c.id}`)}
-                      className="text-xs border border-gray-300 px-2 py-1 rounded-md hover:bg-gray-50"
-                    >
-                      {t('common.view')}
-                    </button>
-                  )}
-                  {!adminView && (
-                    <button
-                      onClick={() => navigate(`/my-customers/${c.id}`)}
-                      className="text-xs border border-gray-300 px-2 py-1 rounded-md hover:bg-gray-50"
-                    >
-                      {t('common.view')}
-                    </button>
-                  )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => navigate(adminView ? `/customers/${c.id}` : `/my-customers/${c.id}`)}
+                  >
+                    {t('common.view')}
+                  </Button>
                 </div>
               </div>
             </Popup>

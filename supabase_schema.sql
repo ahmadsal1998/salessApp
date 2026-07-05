@@ -25,7 +25,15 @@ CREATE TABLE public.rejection_reasons (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 3. Customers
+-- 3. Business Activities (custom "Business Activity" options for customers.category)
+CREATE TABLE public.business_activities (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 4. Customers
 CREATE TABLE public.customers (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   business_name TEXT NOT NULL,
@@ -49,7 +57,7 @@ CREATE TABLE public.customers (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 4. Visits
+-- 5. Visits
 CREATE TABLE public.visits (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   customer_id UUID REFERENCES public.customers(id) ON DELETE CASCADE NOT NULL,
@@ -81,6 +89,7 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.visits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rejection_reasons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.business_activities ENABLE ROW LEVEL SECURITY;
 
 -- Helper function to check role (avoids recursive RLS issues)
 CREATE OR REPLACE FUNCTION public.get_user_role()
@@ -120,6 +129,13 @@ CREATE POLICY "rejection_reasons_read_all" ON public.rejection_reasons
   FOR SELECT USING (auth.uid() IS NOT NULL);
 
 CREATE POLICY "rejection_reasons_admin_write" ON public.rejection_reasons
+  FOR ALL USING (public.get_user_role() = 'admin');
+
+-- Business activities policies
+CREATE POLICY "business_activities_read_all" ON public.business_activities
+  FOR SELECT USING (auth.uid() IS NOT NULL);
+
+CREATE POLICY "business_activities_admin_write" ON public.business_activities
   FOR ALL USING (public.get_user_role() = 'admin');
 
 -- ============================================================
@@ -166,6 +182,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.visits TO authenticated;
 -- rejection_reasons: all authenticated users read; only admins write (via RLS)
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.rejection_reasons TO authenticated;
 
+-- business_activities: all authenticated users read; only admins write (via RLS)
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.business_activities TO authenticated;
+
 -- helper function called by RLS policies must be executable by the role
 GRANT EXECUTE ON FUNCTION public.get_user_role() TO authenticated;
 
@@ -185,6 +204,35 @@ INSERT INTO public.rejection_reasons (reason_en, reason_ar) VALUES
 -- Migration: Add cover_images column (run if table already exists)
 -- ALTER TABLE public.customers ADD COLUMN IF NOT EXISTS cover_images JSONB DEFAULT '[]'::jsonb;
 -- ALTER TABLE public.customers ADD COLUMN IF NOT EXISTS working_hours JSONB DEFAULT NULL;
+-- ============================================================
+
+-- ============================================================
+-- Migration: Add business_activities table (run on an existing
+-- database that doesn't have it yet — safe/idempotent to re-run)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.business_activities (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.business_activities ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "business_activities_read_all" ON public.business_activities;
+CREATE POLICY "business_activities_read_all" ON public.business_activities
+  FOR SELECT USING (auth.uid() IS NOT NULL);
+
+DROP POLICY IF EXISTS "business_activities_admin_write" ON public.business_activities;
+CREATE POLICY "business_activities_admin_write" ON public.business_activities
+  FOR ALL USING (public.get_user_role() = 'admin');
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.business_activities TO authenticated;
+
+INSERT INTO public.business_activities (name) VALUES
+  ('تجزئة'), ('مطاعم وأغذية'), ('خدمات'), ('رعاية صحية'),
+  ('تعليم'), ('تكنولوجيا'), ('تصنيع')
+ON CONFLICT (name) DO NOTHING;
 -- ============================================================
 
 -- ============================================================

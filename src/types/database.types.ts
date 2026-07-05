@@ -166,6 +166,26 @@ export interface Database {
           is_active?: boolean
         }
       }
+      business_activities: {
+        Relationships: []
+        Row: {
+          id: string
+          name: string
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          is_active?: boolean
+        }
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

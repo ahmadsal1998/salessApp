@@ -9,7 +9,7 @@ const PAGE_SIZE = 15
 
 export const customersService = {
   async getCustomers(filters: CustomerFilters = {}): Promise<{ data: CustomerWithEmployee[]; count: number }> {
-    const { search, status, assignedTo, page = 1, pageSize = PAGE_SIZE } = filters
+    const { search, status, assignedTo, category, page = 1, pageSize = PAGE_SIZE } = filters
     const from = (page - 1) * pageSize
     const to = from + pageSize - 1
 
@@ -27,6 +27,9 @@ export const customersService = {
     }
     if (assignedTo && assignedTo !== 'all') {
       query = query.eq('assigned_to', assignedTo)
+    }
+    if (category && category !== 'all') {
+      query = query.eq('category', category)
     }
 
     const { data, error, count } = await query

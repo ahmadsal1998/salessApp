@@ -110,6 +110,7 @@ export default {
     searchPlaceholder: 'Search by name, business or phone...',
     filterByStatus: 'Filter by status',
     filterByEmployee: 'Filter by employee',
+    filterByCategory: 'Filter by business activity',
     totalCustomers: 'Total Customers',
     categories: {
       retail: 'Retail',
@@ -121,6 +122,9 @@ export default {
       manufacturing: 'Manufacturing',
       other: 'Other',
     },
+    addActivity: 'Add new business activity',
+    newActivityName: 'Business activity name',
+    newActivityPlaceholder: 'e.g. Bakery',
     statuses: {
       new: 'New',
       visited: 'Visited',
@@ -283,6 +287,7 @@ export default {
     reasonEn: 'Reason (English)',
     reasonAr: 'Reason (Arabic)',
     activeStatus: 'Active',
+    confirmDeactivateReason: 'Deactivate this rejection reason?',
     profile: 'My Profile',
     updateProfile: 'Update Profile',
     changePassword: 'Change Password',

@@ -4,6 +4,7 @@ export type Profile = Database['public']['Tables']['profiles']['Row']
 export type Customer = Database['public']['Tables']['customers']['Row']
 export type Visit = Database['public']['Tables']['visits']['Row']
 export type RejectionReason = Database['public']['Tables']['rejection_reasons']['Row']
+export type BusinessActivity = Database['public']['Tables']['business_activities']['Row']
 
 export type CustomerStatus = Customer['status']
 export type VisitResult = Visit['result']
@@ -57,6 +58,7 @@ export interface CustomerFilters {
   search?: string
   status?: CustomerStatus | 'all'
   assignedTo?: string | 'all'
+  category?: string | 'all'
   page?: number
   pageSize?: number
 }

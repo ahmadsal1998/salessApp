@@ -1,30 +1,38 @@
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { Clock, Navigation, User, Phone } from 'lucide-react'
 import { useFollowUpCustomers } from '@/hooks/useCustomers'
 import { useAuthStore } from '@/store/auth.store'
 import { CustomerStatusBadge } from '@/components/common/StatusBadge'
 import EmptyState from '@/components/common/EmptyState'
+import { Card } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { formatDate } from '@/utils/format'
 import { isBefore, startOfDay } from 'date-fns'
 import { cn } from '@/utils/cn'
+import type { CustomerWithEmployee } from '@/types/app.types'
 
-type Customer = NonNullable<ReturnType<typeof useFollowUpCustomers>['data']>[number]
+type Priority = 'overdue' | 'today' | 'upcoming'
 
-function getPriorityInfo(c: Customer, today: Date, t: ReturnType<typeof useTranslation>['t']) {
+const PRIORITY_BADGE_VARIANT = {
+  overdue: 'destructive',
+  today: 'warning',
+  upcoming: 'info',
+} as const
+
+const PRIORITY_BORDER: Record<Priority, string> = {
+  overdue: 'border-destructive/30',
+  today: 'border-amber-300/60 dark:border-amber-500/30',
+  upcoming: 'border-border',
+}
+
+function getPriority(c: CustomerWithEmployee, today: Date): Priority {
   const d = new Date(c.updated_at)
-  if (isBefore(d, today)) return {
-    badge: <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">{t('followUps.overdue')}</span>,
-    borderColor: 'border-red-200 dark:border-red-900/40',
-  }
-  if (formatDate(d) === formatDate(today)) return {
-    badge: <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">{t('followUps.today')}</span>,
-    borderColor: 'border-yellow-200 dark:border-yellow-900/40',
-  }
-  return {
-    badge: <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{t('followUps.upcoming')}</span>,
-    borderColor: 'border-gray-200 dark:border-gray-700',
-  }
+  if (isBefore(d, today)) return 'overdue'
+  if (formatDate(d) === formatDate(today)) return 'today'
+  return 'upcoming'
 }
 
 export default function FollowUpsPage() {
@@ -45,10 +53,10 @@ export default function FollowUpsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('followUps.title')}</h1>
+      <h1 className="text-xl font-bold text-foreground">{t('followUps.title')}</h1>
 
       {!isLoading && customers && customers.length > 0 && (
-        <p className="text-xs text-gray-500 dark:text-gray-400 px-1">
+        <p className="text-xs text-muted-foreground px-1">
           {t('common.total')}: {customers.length}
         </p>
       )}
@@ -59,60 +67,81 @@ export default function FollowUpsPage() {
         <EmptyState icon={Clock} title={t('followUps.noFollowUps')} />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {customers.map(c => {
-            const { badge, borderColor } = getPriorityInfo(c, today, t)
-            return (
-              <div
-                key={c.id}
-                onClick={() => navigate(`${detailPath}/${c.id}`)}
-                className={cn(
-                  'bg-white dark:bg-gray-800 rounded-xl border-2 p-4 hover:shadow-sm transition-all cursor-pointer',
-                  borderColor
-                )}
-              >
-                {/* Header: badges */}
-                <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  {badge}
-                  <CustomerStatusBadge status={c.status} />
-                </div>
-
-                {/* Business name */}
-                <h3 className="font-semibold text-gray-900 dark:text-white text-sm truncate mb-2">{c.business_name}</h3>
-
-                {/* Body */}
-                <div className="space-y-1.5 text-xs text-gray-600 dark:text-gray-400">
-                  <div className="flex items-center gap-2">
-                    <User className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                    <span className="truncate">{c.owner_name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                    <span className="font-mono">{c.phone}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400">
-                    <Clock className="w-3.5 h-3.5 shrink-0" />
-                    <span>{formatDate(c.updated_at)}</span>
-                  </div>
-                </div>
-
-                {/* Navigation */}
-                {c.latitude && c.longitude && (
-                  <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/60">
-                    <button
-                      onClick={(e) => openNav(e, c.latitude!, c.longitude!)}
-                      className="flex items-center gap-1.5 text-xs text-primary hover:text-blue-700 font-medium transition-colors"
-                    >
-                      <Navigation className="w-3.5 h-3.5" />
-                      {t('customers.navigateToLocation')}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )
-          })}
+          {customers.map(c => (
+            <FollowUpCard
+              key={c.id}
+              customer={c}
+              priority={getPriority(c, today)}
+              onView={() => navigate(`${detailPath}/${c.id}`)}
+              onNavigate={(e) => c.latitude && c.longitude ? openNav(e, c.latitude, c.longitude) : undefined}
+              t={t}
+            />
+          ))}
         </div>
       )}
     </div>
+  )
+}
+
+function FollowUpCard({
+  customer: c,
+  priority,
+  onView,
+  onNavigate,
+  t,
+}: {
+  customer: CustomerWithEmployee
+  priority: Priority
+  onView: () => void
+  onNavigate: (e: React.MouseEvent) => void
+  t: TFunction
+}) {
+  return (
+    <Card
+      onClick={onView}
+      className={cn(
+        'p-4 border-2 cursor-pointer hover:shadow-(--shadow-popover) transition-shadow',
+        PRIORITY_BORDER[priority]
+      )}
+    >
+      {/* Header: badges */}
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
+        <Badge variant={PRIORITY_BADGE_VARIANT[priority]}>{t(`followUps.${priority}`)}</Badge>
+        <CustomerStatusBadge status={c.status} />
+      </div>
+
+      {/* Business name */}
+      <h3 className="font-semibold text-foreground text-sm truncate mb-2">{c.business_name}</h3>
+
+      {/* Body */}
+      <div className="space-y-1.5 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <User className="size-3.5 text-muted-foreground shrink-0" />
+          <span className="truncate">{c.owner_name}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Phone className="size-3.5 text-muted-foreground shrink-0" />
+          <span className="font-mono">{c.phone}</span>
+        </div>
+        <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+          <Clock className="size-3.5 shrink-0" />
+          <span>{formatDate(c.updated_at)}</span>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      {c.latitude && c.longitude && (
+        <div className="mt-3 pt-3 border-t border-border">
+          <button
+            onClick={onNavigate}
+            className="flex items-center gap-1.5 text-xs text-primary hover:text-primary-hover font-medium transition-colors"
+          >
+            <Navigation className="size-3.5" />
+            {t('customers.navigateToLocation')}
+          </button>
+        </div>
+      )}
+    </Card>
   )
 }
 
@@ -120,18 +149,18 @@ function FollowUpSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 p-4 space-y-3">
+        <Card key={i} className="p-4 space-y-3 border-2">
           <div className="flex items-center gap-2">
-            <div className="h-5 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse w-16" />
-            <div className="h-5 rounded-full bg-gray-100 dark:bg-gray-700/60 animate-pulse w-14" />
+            <Skeleton className="h-5 w-16 rounded-full" />
+            <Skeleton className="h-5 w-14 rounded-full" />
           </div>
-          <div className="h-4 rounded-md bg-gray-200 dark:bg-gray-700 animate-pulse w-3/4" />
+          <Skeleton className="h-4 w-3/4" />
           <div className="space-y-2">
-            <div className="h-3 rounded-md bg-gray-100 dark:bg-gray-700/60 animate-pulse w-2/3" />
-            <div className="h-3 rounded-md bg-gray-100 dark:bg-gray-700/60 animate-pulse w-1/2" />
-            <div className="h-3 rounded-md bg-gray-100 dark:bg-gray-700/60 animate-pulse w-1/3" />
+            <Skeleton className="h-3 w-2/3" />
+            <Skeleton className="h-3 w-1/2" />
+            <Skeleton className="h-3 w-1/3" />
           </div>
-        </div>
+        </Card>
       ))}
     </div>
   )

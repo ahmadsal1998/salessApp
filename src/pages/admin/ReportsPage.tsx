@@ -4,24 +4,37 @@ import { useQuery } from '@tanstack/react-query'
 import { visitsService } from '@/services/visits.service'
 import { useRejectionBreakdown } from '@/hooks/useVisits'
 import { useEmployees } from '@/hooks/useEmployees'
-import { Download, Users } from 'lucide-react'
+import { Download, Users, X } from 'lucide-react'
 import { formatPercent } from '@/utils/format'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import EmptyState from '@/components/common/EmptyState'
-import { cn } from '@/utils/cn'
+import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Skeleton } from '@/components/ui/Skeleton'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/Select'
+import { RankedListItem } from '@/components/dashboard/RankedListItem'
+import { useChartTheme } from '@/utils/chart-theme'
 
 export default function ReportsPage() {
   const { t } = useTranslation()
+  const chartTheme = useChartTheme()
   const [employeeId, setEmployeeId] = useState('all')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
 
   const { data: employees } = useEmployees()
-  const { data: rejectionData = [] } = useRejectionBreakdown()
+  const { data: rejectionData = [], isLoading: rejectionLoading } = useRejectionBreakdown()
 
   const hasActiveFilters = employeeId !== 'all' || !!dateFrom || !!dateTo
 
-  const { data: reportData = [] } = useQuery({
+  function clearFilters() {
+    setEmployeeId('all')
+    setDateFrom('')
+    setDateTo('')
+  }
+
+  const { data: reportData = [], isLoading: reportLoading } = useQuery({
     queryKey: ['report', employeeId, dateFrom, dateTo],
     queryFn: () => visitsService.getReportData(
       employeeId !== 'all' ? employeeId : undefined,
@@ -51,108 +64,130 @@ export default function ReportsPage() {
     URL.revokeObjectURL(url)
   }
 
-  const sel = 'px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary'
+  const tooltipStyle = {
+    background: chartTheme.tooltipBg,
+    border: `1px solid ${chartTheme.tooltipBorder}`,
+    color: chartTheme.tooltipText,
+    borderRadius: 8,
+    fontSize: 12,
+  }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('reports.title')}</h1>
-        <button
-          onClick={exportCSV}
-          className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-        >
+        <h1 className="text-xl font-bold text-foreground">{t('reports.title')}</h1>
+        <Button variant="outline" onClick={exportCSV}>
           <Download className="w-4 h-4" />
           {t('reports.exportCSV')}
-        </button>
+        </Button>
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-        <div className="flex flex-wrap gap-3">
-          <select value={employeeId} onChange={e => setEmployeeId(e.target.value)} className={sel}>
-            <option value="all">{t('common.all')} {t('employees.title')}</option>
-            {employees?.map(e => <option key={e.id} value={e.id}>{e.full_name}</option>)}
-          </select>
+      <Card className="p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Select value={employeeId} onValueChange={setEmployeeId}>
+            <SelectTrigger className="w-auto min-w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('common.all')} {t('employees.title')}</SelectItem>
+              {employees?.map(e => (
+                <SelectItem key={e.id} value={e.id}>{e.full_name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500 shrink-0">{t('reports.from')}</span>
-            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className={sel} />
+            <span className="text-sm text-muted-foreground shrink-0">{t('reports.from')}</span>
+            <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-auto" />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500 shrink-0">{t('reports.to')}</span>
-            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className={sel} />
+            <span className="text-sm text-muted-foreground shrink-0">{t('reports.to')}</span>
+            <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-auto" />
           </div>
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <X className="w-4 h-4" />
+              {t('common.clear')}
+            </Button>
+          )}
         </div>
-      </div>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Employee performance — ranked cards */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="font-semibold text-gray-900 dark:text-white">{t('reports.employeePerformance')}</h3>
+        <Card>
+          <div className="p-4 border-b border-border">
+            <h3 className="font-semibold text-foreground">{t('reports.employeePerformance')}</h3>
           </div>
-          {sortedData.length === 0 ? (
+          {reportLoading ? (
+            <div className="p-4 space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 rounded-xl border border-border p-3">
+                  <Skeleton className="size-8 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <Skeleton className="h-3.5 w-32" />
+                    <Skeleton className="h-1.5 w-full rounded-full" />
+                  </div>
+                  <div className="flex gap-4 shrink-0">
+                    <Skeleton className="h-8 w-10" />
+                    <Skeleton className="h-8 w-10" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : sortedData.length === 0 ? (
             <EmptyState size="compact" icon={Users} title={t(hasActiveFilters ? 'common.noFilterResults' : 'common.noData')} />
           ) : (
             <div className="p-4 space-y-3">
               {sortedData.map((row, i) => {
                 const rate = row.total > 0 ? (row.approved / row.total) * 100 : 0
-                const rankColor = i === 0
-                  ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                  : i === 1
-                    ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
-                    : i === 2
-                      ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400'
-                      : 'bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
                 return (
-                  <div key={row.employee.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                    <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0', rankColor)}>
-                      {i + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{row.employee.full_name}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                          <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${rate}%` }} />
+                  <RankedListItem
+                    key={row.employee.id}
+                    rank={i + 1}
+                    name={row.employee.full_name}
+                    rate={rate}
+                    rateLabel={formatPercent(rate)}
+                    right={
+                      <>
+                        <div>
+                          <p className="font-semibold text-foreground tabular-nums">{row.total}</p>
+                          <p className="text-muted-foreground">{t('reports.visits')}</p>
                         </div>
-                        <span className="text-xs text-primary font-medium shrink-0 tabular-nums">{formatPercent(rate)}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 shrink-0 text-xs text-center">
-                      <div>
-                        <p className="font-semibold text-gray-900 dark:text-white tabular-nums">{row.total}</p>
-                        <p className="text-gray-400">{t('reports.visits')}</p>
-                      </div>
-                      <div>
-                        <p className="font-semibold text-green-600 dark:text-green-400 tabular-nums">{row.approved}</p>
-                        <p className="text-gray-400">{t('reports.approved')}</p>
-                      </div>
-                    </div>
-                  </div>
+                        <div>
+                          <p className="font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">{row.approved}</p>
+                          <p className="text-muted-foreground">{t('reports.approved')}</p>
+                        </div>
+                      </>
+                    }
+                  />
                 )
               })}
             </div>
           )}
-        </div>
+        </Card>
 
         {/* Rejection chart */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-4">{t('reports.rejectionAnalysis')}</h3>
-          {rejectionData.length > 0 ? (
+        <Card className="p-5">
+          <h3 className="font-semibold text-foreground mb-4">{t('reports.rejectionAnalysis')}</h3>
+          {rejectionLoading ? (
+            <Skeleton className="h-48 w-full" />
+          ) : rejectionData.length > 0 ? (
             <div style={{ height: Math.max(180, rejectionData.length * 40) }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={rejectionData} layout="vertical" margin={{ left: 0, right: 24, top: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.1} />
-                  <XAxis type="number" tick={{ fontSize: 10 }} allowDecimals={false} />
-                  <YAxis type="category" dataKey="reason" tick={{ fontSize: 10 }} width={110} />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#ef4444" radius={[0, 4, 4, 0]} maxBarSize={20} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                  <XAxis type="number" tick={{ fontSize: 10, fill: chartTheme.axis }} allowDecimals={false} />
+                  <YAxis type="category" dataKey="reason" tick={{ fontSize: 10, fill: chartTheme.axis }} width={110} />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Bar dataKey="count" fill={chartTheme.colors[4 % chartTheme.colors.length]} radius={[0, 4, 4, 0]} maxBarSize={20} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-48 flex items-center justify-center text-gray-400 text-sm">{t('common.noData')}</div>
+            <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">{t('common.noData')}</div>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   )

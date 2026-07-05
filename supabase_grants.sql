@@ -40,6 +40,11 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.visits TO authenticated;
 -- (enforced by the rejection_reasons_admin_write RLS policy).
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.rejection_reasons TO authenticated;
 
+-- ── business_activities ─────────────────────────────────────
+-- All authenticated users can read; only admins can write
+-- (enforced by the business_activities_admin_write RLS policy).
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.business_activities TO authenticated;
+
 -- ── get_user_role() helper ──────────────────────────────────
 -- PostgREST evaluates RLS policies as the calling role, so the
 -- `authenticated` role must be able to EXECUTE the helper that

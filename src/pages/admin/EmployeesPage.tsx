@@ -1,12 +1,28 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus, Search, ToggleLeft, ToggleRight, X, Users } from 'lucide-react'
+import { Plus, Search, Users } from 'lucide-react'
 import { useEmployees, useCreateEmployee, useUpdateEmployee } from '@/hooks/useEmployees'
 import EmptyState from '@/components/common/EmptyState'
-import { cn } from '@/utils/cn'
+import ConfirmDialog from '@/components/common/ConfirmDialog'
+import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { FormField } from '@/components/ui/FormField'
+import { Badge } from '@/components/ui/Badge'
+import { Switch } from '@/components/ui/Switch'
+import { Skeleton } from '@/components/ui/Skeleton'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogBody,
+  DialogFooter,
+} from '@/components/ui/Dialog'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import type { Profile } from '@/types/app.types'
 
 const addSchema = z.object({
   full_name: z.string().min(2),
@@ -20,6 +36,7 @@ export default function EmployeesPage() {
   const { t } = useTranslation()
   const [search, setSearch] = useState('')
   const [addOpen, setAddOpen] = useState(false)
+  const [toggleTarget, setToggleTarget] = useState<Profile | null>(null)
   const { data: employees, isLoading } = useEmployees()
   const createMutation = useCreateEmployee()
   const updateMutation = useUpdateEmployee()
@@ -45,54 +62,62 @@ export default function EmployeesPage() {
     reset()
   }
 
-  async function toggleActive(id: string, current: boolean) {
-    await updateMutation.mutateAsync({ id, data: { is_active: !current } })
+  function requestToggle(emp: Profile) {
+    // Only confirm when deactivating; re-activating is non-destructive.
+    if (emp.is_active) {
+      setToggleTarget(emp)
+    } else {
+      updateMutation.mutate({ id: emp.id, data: { is_active: true } })
+    }
+  }
+
+  async function confirmToggle() {
+    if (!toggleTarget) return
+    await updateMutation.mutateAsync({ id: toggleTarget.id, data: { is_active: false } })
+    setToggleTarget(null)
   }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('employees.title')}</h1>
-        <button
-          onClick={() => setAddOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
-        >
+        <h1 className="text-xl font-bold text-foreground">{t('employees.title')}</h1>
+        <Button onClick={() => setAddOpen(true)}>
           <Plus className="w-4 h-4" />
           {t('employees.addEmployee')}
-        </button>
+        </Button>
       </div>
 
       {/* Search */}
       <div className="relative max-w-sm">
-        <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
+        <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('employees.searchPlaceholder')}
-          className="w-full ps-9 pe-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+          className="ps-9"
         />
       </div>
 
       {/* Cards */}
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({length: 6}).map((_,i) => (
-            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i} className="p-5 space-y-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse shrink-0" />
+                  <Skeleton className="w-10 h-10 rounded-full shrink-0" />
                   <div className="space-y-1.5">
-                    <div className="h-4 rounded-md bg-gray-200 dark:bg-gray-700 animate-pulse w-24" />
-                    <div className="h-3 rounded-md bg-gray-100 dark:bg-gray-700/60 animate-pulse w-32" />
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-32" />
                   </div>
                 </div>
-                <div className="h-7 w-7 rounded-md bg-gray-100 dark:bg-gray-700/60 animate-pulse" />
+                <Skeleton className="h-6 w-10 rounded-full" />
               </div>
               <div className="flex items-center justify-between">
-                <div className="h-3 rounded-md bg-gray-100 dark:bg-gray-700/60 animate-pulse w-20" />
-                <div className="h-5 rounded-full bg-gray-100 dark:bg-gray-700/60 animate-pulse w-14" />
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-5 w-14 rounded-full" />
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -100,84 +125,81 @@ export default function EmployeesPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map(emp => (
-            <div key={emp.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+            <Card key={emp.id} className="p-5">
               <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0">
                     {emp.full_name?.[0]?.toUpperCase()}
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-white text-sm">{emp.full_name}</p>
-                    <p className="text-xs text-gray-500">{emp.email}</p>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-foreground text-sm truncate">{emp.full_name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{emp.email}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => toggleActive(emp.id, emp.is_active)}
-                  className={cn('transition-colors', emp.is_active ? 'text-green-500' : 'text-gray-400')}
-                >
-                  {emp.is_active ? <ToggleRight className="w-7 h-7" /> : <ToggleLeft className="w-7 h-7" />}
-                </button>
+                <Switch
+                  checked={emp.is_active}
+                  onCheckedChange={() => requestToggle(emp)}
+                  aria-label={emp.is_active ? t('common.active') : t('common.inactive')}
+                  className="shrink-0"
+                />
               </div>
-              <div className="flex items-center justify-between text-xs text-gray-500">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
                 {emp.phone && <span>{emp.phone}</span>}
-                <span className={cn(
-                  'px-2 py-0.5 rounded-full text-xs font-medium',
-                  emp.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                )}>
+                <Badge variant={emp.is_active ? 'success' : 'default'}>
                   {emp.is_active ? t('common.active') : t('common.inactive')}
-                </span>
+                </Badge>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}
 
-      {/* Add Employee Modal */}
-      {addOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setAddOpen(false)} />
-          <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md z-10 p-6">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('employees.addEmployee')}</h2>
-              <button onClick={() => setAddOpen(false)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500"><X className="w-5 h-5" /></button>
-            </div>
-            <form onSubmit={handleSubmit(handleCreate)} className="space-y-4">
-              <Field label={t('employees.fullName')} error={errors.full_name?.message} required>
-                <input {...register('full_name')} className={inp} />
-              </Field>
-              <Field label={t('employees.email')} error={errors.email?.message} required>
-                <input {...register('email')} type="email" className={inp} />
-              </Field>
-              <Field label={t('employees.phone')} error={errors.phone?.message}>
-                <input {...register('phone')} type="tel" className={inp} />
-              </Field>
-              <Field label={t('employees.setPassword')} error={errors.password?.message} required>
-                <input {...register('password')} type="password" className={inp} />
-              </Field>
-              <p className="text-xs text-gray-400">{t('employees.passwordInfo')}</p>
-              <div className="flex justify-end gap-3">
-                <button type="button" onClick={() => setAddOpen(false)} className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 transition-colors">{t('common.cancel')}</button>
-                <button type="submit" disabled={createMutation.isPending} className="px-4 py-2 rounded-lg bg-primary hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-60 flex items-center gap-2 transition-colors">
-                  {createMutation.isPending && <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent" />}
-                  {t('common.save')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Add Employee Dialog */}
+      <Dialog open={addOpen} onOpenChange={(open) => { setAddOpen(open); if (!open) reset() }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('employees.addEmployee')}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit(handleCreate)}>
+            <DialogBody className="space-y-4">
+              <FormField label={t('employees.fullName')} error={errors.full_name?.message} required>
+                <Input {...register('full_name')} aria-invalid={!!errors.full_name} />
+              </FormField>
+              <FormField label={t('employees.email')} error={errors.email?.message} required>
+                <Input {...register('email')} type="email" aria-invalid={!!errors.email} />
+              </FormField>
+              <FormField label={t('employees.phone')} error={errors.phone?.message}>
+                <Input {...register('phone')} type="tel" />
+              </FormField>
+              <FormField
+                label={t('employees.setPassword')}
+                error={errors.password?.message}
+                required
+                hint={t('employees.passwordInfo')}
+              >
+                <Input {...register('password')} type="password" aria-invalid={!!errors.password} />
+              </FormField>
+            </DialogBody>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button type="submit" loading={createMutation.isPending}>
+                {t('common.save')}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={!!toggleTarget}
+        title={t('employees.confirmDeactivate')}
+        confirmLabel={t('common.confirm')}
+        onConfirm={confirmToggle}
+        onCancel={() => setToggleTarget(null)}
+        loading={updateMutation.isPending}
+      />
     </div>
   )
 }
-
-function Field({ label, error, required, children }: { label: string; error?: string; required?: boolean; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{label}{required && <span className="text-red-500 ms-0.5">*</span>}</label>
-      {children}
-      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
-    </div>
-  )
-}
-
-const inp = 'w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors'

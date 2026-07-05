@@ -15,20 +15,20 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-[0_-4px_24px_rgba(0,0,0,0.07)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.35)]"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card shadow-[0_-4px_24px_rgba(0,0,0,0.07)] lg:hidden dark:shadow-[0_-4px_24px_rgba(0,0,0,0.4)]"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <div className="flex items-center h-16">
+      <div className="flex h-16 items-center">
         {navItems.map(({ key, icon: Icon, to }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
               cn(
-                'flex-1 flex flex-col items-center justify-center gap-1 h-full transition-colors active:opacity-60',
+                'flex h-full flex-1 flex-col items-center justify-center gap-1 transition-colors active:opacity-60',
                 isActive
                   ? 'text-primary'
-                  : 'text-gray-400 dark:text-gray-500'
+                  : 'text-muted-foreground'
               )
             }
           >
@@ -36,8 +36,8 @@ export default function BottomNav() {
               <>
                 <span
                   className={cn(
-                    'w-12 h-8 flex items-center justify-center rounded-2xl transition-all duration-200',
-                    isActive && 'bg-primary/10 dark:bg-primary/15'
+                    'flex h-8 w-12 items-center justify-center rounded-2xl transition-all duration-200',
+                    isActive && 'bg-primary/10'
                   )}
                 >
                   <Icon
