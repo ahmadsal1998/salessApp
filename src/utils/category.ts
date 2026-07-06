@@ -10,3 +10,19 @@ export function getCategoryLabel(category: string | null | undefined, t: TFuncti
     ? t(`customers.categories.${category}`)
     : category
 }
+
+const CATEGORY_ICONS: Record<string, string> = {
+  retail: '🛍️',
+  restaurant: '🍔',
+  services: '🛠️',
+  healthcare: '⚕️',
+  education: '🎓',
+  technology: '💻',
+  manufacturing: '🏭',
+  other: '🏷️',
+}
+
+export function getCategoryIcon(category: string | null | undefined): string {
+  if (!category) return '🏷️'
+  return CATEGORY_ICONS[category] ?? '🏷️'
+}

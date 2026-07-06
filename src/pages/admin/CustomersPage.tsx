@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { Plus, Search, Edit2, Trash2, Eye, MapPin, User, Phone, UserCheck, SlidersHorizontal, X, MoreVertical, Tag } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, Eye, MapPin, User, Phone, SlidersHorizontal, X, MoreVertical } from 'lucide-react'
 import { useCustomers, useDeleteCustomer } from '@/hooks/useCustomers'
 import { useEmployees } from '@/hooks/useEmployees'
 import { useBusinessActivities } from '@/hooks/useBusinessActivities'
@@ -14,6 +14,7 @@ import EmptyState from '@/components/common/EmptyState'
 import BottomSheet from '@/components/ui/BottomSheet'
 import StatusFilterChips from '@/components/ui/StatusFilterChips'
 import { Card } from '@/components/ui/Card'
+import { Avatar, AvatarFallback } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
@@ -21,7 +22,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/Select'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/DropdownMenu'
 import { formatDate } from '@/utils/format'
-import { STATIC_CATEGORIES, getCategoryLabel } from '@/utils/category'
+import { STATIC_CATEGORIES, getCategoryLabel, getCategoryIcon } from '@/utils/category'
 import type { CustomerWithEmployee, CustomerStatus } from '@/types/app.types'
 import { Users } from 'lucide-react'
 import { cn } from '@/utils/cn'
@@ -243,7 +244,7 @@ export default function CustomersPage() {
           ) : undefined}
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
           {customers.map((c) => (
             <CustomerCard
               key={c.id}
@@ -306,90 +307,99 @@ function CustomerCard({
   t: TFunction
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const categoryLabel = getCategoryLabel(c.category, t)
+  const assignedEmployee = c.assigned_employee
 
   return (
-    <Card className="p-4 hover:border-border/70 transition-colors">
-      {/* Header: business name + status + mobile menu trigger */}
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-semibold text-foreground text-sm truncate">{c.business_name}</h3>
-            <CustomerStatusBadge status={c.status} className="shrink-0" />
-          </div>
-          {(c.city || c.area) && (
-            <p className="text-xs text-muted-foreground mt-1 truncate flex items-center gap-1">
-              <MapPin className="size-3 shrink-0" />
-              {[c.city, c.area].filter(Boolean).join(', ')}
-            </p>
-          )}
-        </div>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => setMenuOpen(true)}
-          aria-label={t('common.actions')}
-          className="sm:hidden shrink-0 -me-1.5 -mt-1 text-muted-foreground"
-        >
-          <MoreVertical className="size-4" />
-        </Button>
+    <Card className="relative p-4 rounded-2xl border-border/60 shadow-(--shadow-card) transition-all duration-200 hover:shadow-(--shadow-card-hover) hover:-translate-y-0.5 hover:border-border">
+      {/* Options trigger — top-right corner, all breakpoints */}
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={() => setMenuOpen(true)}
+        aria-label={t('common.actions')}
+        className="sm:hidden absolute top-3 inset-e-3 text-muted-foreground"
+      >
+        <MoreVertical className="size-4" />
+      </Button>
+      <div className="hidden sm:block absolute top-3 inset-e-3">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon-sm" aria-label={t('common.actions')} className="text-muted-foreground">
+              <MoreVertical className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onView(c.id)}>
+              <Eye className="size-4" />
+              {t('common.view')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onEdit(c)}>
+              <Edit2 className="size-4" />
+              {t('common.edit')}
+            </DropdownMenuItem>
+            <DropdownMenuItem destructive onClick={() => onDelete(c.id)}>
+              <Trash2 className="size-4" />
+              {t('common.delete')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      {/* Body rows */}
-      <div className="space-y-1.5 mb-3">
+      {/* Header: business name + status + category tag */}
+      <div className="pe-8">
+        <h3 className="font-bold text-foreground text-[15px] leading-tight truncate">{c.business_name}</h3>
+        <div className="flex items-center gap-1.5 flex-wrap mt-2">
+          <CustomerStatusBadge status={c.status} className="shrink-0" />
+          {categoryLabel && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-secondary-foreground shrink-0">
+              <span aria-hidden>{getCategoryIcon(c.category)}</span>
+              {categoryLabel}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Contact details */}
+      <div className="space-y-1.5 mt-3">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <User className="size-3.5 shrink-0" />
+          <User className="size-3.5 shrink-0 text-muted-foreground/70" />
           <span className="truncate">{c.owner_name}</span>
         </div>
+        {(c.city || c.area) && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <MapPin className="size-3.5 shrink-0 text-muted-foreground/70" />
+            <span className="truncate">{[c.city, c.area].filter(Boolean).join(', ')}</span>
+          </div>
+        )}
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Phone className="size-3.5 shrink-0" />
-          <a href={`tel:${c.phone}`} onClick={(e) => e.stopPropagation()} className="font-mono hover:text-primary transition-colors">
+          <Phone className="size-3.5 shrink-0 text-muted-foreground/70" />
+          <a href={`tel:${c.phone}`} onClick={(e) => e.stopPropagation()} dir="ltr" className="font-mono hover:text-primary transition-colors">
             {c.phone}
           </a>
         </div>
-        {c.category && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Tag className="size-3.5 shrink-0" />
-            <span className="truncate">{getCategoryLabel(c.category, t)}</span>
-          </div>
-        )}
       </div>
 
-      {/* Footer: assigned + date + desktop actions */}
-      <div className="flex items-center justify-between pt-3 border-t border-border">
-        <div className="min-w-0">
-          {(c as CustomerWithEmployee).assigned_employee ? (
-            <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
-              <UserCheck className="size-3 shrink-0" />
-              {(c as CustomerWithEmployee).assigned_employee!.full_name}
-            </p>
-          ) : (
-            <p className="text-xs text-muted-foreground italic">{t('customers.unassigned')}</p>
-          )}
-          <p className="text-xs text-muted-foreground mt-0.5">{formatDate(c.created_at)}</p>
-        </div>
-        <div className="hidden sm:flex items-center ms-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" aria-label={t('common.actions')}>
-                <MoreVertical className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onView(c.id)}>
-                <Eye className="size-4" />
-                {t('common.view')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onEdit(c)}>
-                <Edit2 className="size-4" />
-                {t('common.edit')}
-              </DropdownMenuItem>
-              <DropdownMenuItem destructive onClick={() => onDelete(c.id)}>
-                <Trash2 className="size-4" />
-                {t('common.delete')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+      {/* Footer: assigned agent + creation date */}
+      <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-border/60">
+        {assignedEmployee ? (
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Avatar className="size-5">
+              <AvatarFallback className="text-[10px]">
+                {assignedEmployee.full_name?.[0]?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-xs text-muted-foreground truncate">{assignedEmployee.full_name}</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 min-w-0 text-muted-foreground/60">
+            <span className="flex size-5 items-center justify-center rounded-full bg-secondary shrink-0">
+              <User className="size-3" />
+            </span>
+            <span className="text-xs italic truncate">{t('customers.unassigned')}</span>
+          </div>
+        )}
+        <span className="text-[11px] text-muted-foreground/70 shrink-0">{formatDate(c.created_at)}</span>
       </div>
 
       {/* Mobile action sheet */}
@@ -433,23 +443,24 @@ function SheetAction({
 
 function CardSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <Card key={i} className="p-4 space-y-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="space-y-1.5 flex-1">
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-3 w-1/2" />
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Card key={i} className="p-4 space-y-3 rounded-2xl">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-3/4" />
+            <div className="flex gap-1.5">
+              <Skeleton className="h-5 w-16 rounded-full" />
+              <Skeleton className="h-5 w-20 rounded-full" />
             </div>
-            <Skeleton className="h-5 w-16 rounded-full shrink-0" />
           </div>
           <div className="space-y-2">
             <Skeleton className="h-3 w-2/3" />
             <Skeleton className="h-3 w-1/2" />
+            <Skeleton className="h-3 w-2/5" />
           </div>
-          <div className="flex items-center justify-between pt-3 border-t border-border">
-            <Skeleton className="h-3 w-1/3" />
-            <Skeleton className="h-7 w-7 rounded-lg" />
+          <div className="flex items-center justify-between pt-3 border-t border-border/60">
+            <Skeleton className="h-5 w-24 rounded-full" />
+            <Skeleton className="h-3 w-12" />
           </div>
         </Card>
       ))}

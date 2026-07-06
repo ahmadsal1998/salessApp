@@ -52,10 +52,10 @@ export default function Sidebar() {
         className={cn(
           isSales ? 'hidden lg:flex lg:flex-col' : 'flex flex-col',
           'fixed inset-y-0 inset-s-0 z-50 border-e border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out',
-          'lg:relative lg:translate-x-0 lg:rtl:translate-x-0',
+          'lg:relative lg:ltr:translate-x-0 lg:rtl:translate-x-0',
           sidebarOpen
             ? 'w-64 translate-x-0'
-            : 'w-64 ltr:-translate-x-full rtl:translate-x-full lg:w-16 lg:translate-x-0 lg:rtl:translate-x-0'
+            : 'w-64 ltr:-translate-x-full rtl:translate-x-full lg:w-16 lg:ltr:translate-x-0 lg:rtl:translate-x-0'
         )}
       >
         {/* Logo */}
