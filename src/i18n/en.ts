@@ -61,7 +61,9 @@ export default {
     loggingIn: 'Signing in...',
     invalidCredentials: 'Invalid email or password',
     loginError: 'Login failed. Please try again.',
-    appName: 'Baraka Sales',
+    rememberMe: 'Remember me',
+    forgotPassword: 'Forgot password?',
+    appName: 'Qujeh Sales',
     appTagline: 'Sales Management Platform',
   },
   // Navigation

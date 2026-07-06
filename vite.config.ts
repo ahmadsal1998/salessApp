@@ -13,10 +13,10 @@ export default defineConfig({
       injectRegister: 'auto',
       includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon-180x180.png', 'pwa-64x64.png'],
       manifest: {
-        name: 'Baraka Sales App',
-        short_name: 'Baraka',
-        description: 'Baraka Sales Management Application',
-        theme_color: '#863bff',
+        name: 'Qujeh Sales App',
+        short_name: 'Qujeh',
+        description: 'Qujeh Sales Management Application',
+        theme_color: '#006752',
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
@@ -87,7 +87,7 @@ export default defineConfig({
         ],
       },
       devOptions: {
-        enabled: true,
+        enabled: false,
         type: 'module',
       },
     }),

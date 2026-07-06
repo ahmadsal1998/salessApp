@@ -1,5 +1,5 @@
 -- ============================================================
--- Baraka Sales App — Data API permission grants
+-- Qujeh Sales App — Data API permission grants
 --
 -- Context: Starting May 30 Supabase will no longer grant public-
 -- schema table access to the `anon` / `authenticated` PostgREST

@@ -1,5 +1,5 @@
 -- ============================================================
--- Baraka Sales App — Supabase Database Schema
+-- Qujeh Sales App — Supabase Database Schema
 -- Run this in your Supabase SQL Editor (Dashboard → SQL Editor)
 -- ============================================================
 

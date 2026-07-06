@@ -59,7 +59,9 @@ export default {
     loggingIn: 'جاري تسجيل الدخول...',
     invalidCredentials: 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
     loginError: 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.',
-    appName: 'بركة للمبيعات',
+    rememberMe: 'تذكرني',
+    forgotPassword: 'نسيت كلمة المرور؟',
+    appName: 'قجة للمبيعات',
     appTagline: 'منصة إدارة المبيعات',
   },
   nav: {

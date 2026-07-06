@@ -2,13 +2,14 @@ import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   LayoutDashboard, Users, UserCheck, CalendarCheck, BarChart2,
-  Map, Settings, X, BarChart3, Navigation, ClipboardList, ChevronRight,
+  Map, Settings, X, Navigation, ClipboardList, ChevronRight,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/auth.store'
 import { useUiStore } from '@/store/ui.store'
 import { cn } from '@/utils/cn'
 import { Avatar, AvatarFallback } from '@/components/ui/Avatar'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/Tooltip'
+import { LogoMark } from '@/components/icons/LogoMark'
 
 const adminNav = [
   { key: 'nav.dashboard', icon: LayoutDashboard, to: '/dashboard' },
@@ -60,7 +61,7 @@ export default function Sidebar() {
         {/* Logo */}
         <div className="flex h-16 shrink-0 items-center gap-3 overflow-hidden border-b border-sidebar-border px-4">
           <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <BarChart3 className="size-5" />
+            <LogoMark className="size-5" />
           </div>
           <div className={cn('min-w-0 flex-1 transition-all duration-300', !sidebarOpen && 'lg:hidden')}>
             <p className="truncate text-sm font-bold text-foreground">

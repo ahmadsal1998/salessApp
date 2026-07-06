@@ -22,6 +22,6 @@ export const useUiStore = create<UiState>()(
       setLanguage: (language) => set({ language }),
       toggleDarkMode: () => set((s) => ({ darkMode: !s.darkMode })),
     }),
-    { name: 'baraka-ui' }
+    { name: 'qujeh-ui' }
   )
 )
